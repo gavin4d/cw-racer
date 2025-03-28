@@ -566,13 +566,6 @@
 
             // Now perform the initial UI setup that depends on decoder mode
             updateDisplays();
-            if (decoder.mode === Decoder.SPEED_TRACKING) {
-                document.getElementById('wpm').disabled = true;
-                document.getElementById('farnsworth').disabled = true;
-            } else {
-                document.getElementById('wpm').disabled = false;
-                document.getElementById('farnsworth').disabled = false;
-            }
             updateStatsDisplay(); // Initial stat display
         });
     </script>
