@@ -69,13 +69,13 @@ class Decoder {
 		this.unitAverageWeight = options.unitAverageWeight || 5; // How much history to average for unit estimation
 		this.mode = options.mode !== undefined ? options.mode : Decoder.SPEED_TRACKING;
 		this.wpm = options.wpm || 15;
+		this.farnsworth = options.farnsworth !== undefined ? options.farnsworth : 1; // Multiplier, 1 = standard
 		this.unit = this.calculateUnit(this.wpm); // Initial unit length in ms
 		this.keyStartTime = null; // Timestamp when key went down
 		this.keyEndTime = null;   // Timestamp when key went up
 		this.spaceTimer = null;
-        this.farnsworth = 3;
-		this.wordTimer = null; // Timer for word boundaries
-		this.wordTimeout = this.unit * 7; // A typical word gap is 7 units
+        this.wordTimer = null; // Timer for word boundaries
+        this.wordTimeout = 0; // Will be set by #updateTimeouts
 
  		// Store recent classified timings for stats
  		this.maxHistory = 20;
@@ -87,6 +87,7 @@ class Decoder {
 		// For visual timing bar
 		this.currentLetterTimings = []; // Stores { type: 'mark'/'space', duration: ms } for the letter being keyed
 		this.lastLetterTimings = null; // Stores timings for the most recently completed letter
+		this.#updateTimeouts();
 	}
 
 	keyOn() {
@@ -133,7 +134,7 @@ class Decoder {
 
 		// The registerDit/Dah calls below handle the unit adjustment and building decodeArray
 
-        let spaceTime = this.unit * this.farnsworth;
+        let spaceTime = this.unit * 2; // Fixed 2-unit gap for robust letter end detection
 		this.spaceTimer = setTimeout(() => { // end sequence and decode letter
 			this.updateLastLetter(this.morseToLetter(this.decodeArray));
 			this.decodeArray = ''; // Clear pattern *after* decoding
@@ -148,6 +149,8 @@ class Decoder {
 			// Give more weight to history to avoid wild swings
 			this.unit = (this.unit * (this.unitAverageWeight - 1) + duration) / this.unitAverageWeight;
 			this.unit = Math.max(20, this.unit); // Prevent unit from becoming too small (e.g. > 60 WPM)
+			this.wpm = this.calculateWpm(); // Update WPM based on new unit
+			this.#updateTimeouts(); // Recalculate space timeouts
 			// console.log("Unit updated by Dit:", this.unit.toFixed(1));
 		}
 	}
@@ -159,6 +162,8 @@ class Decoder {
 			const estimatedUnit = duration / 3;
 			this.unit = (this.unit * (this.unitAverageWeight - 1) + estimatedUnit) / this.unitAverageWeight;
 			this.unit = Math.max(20, this.unit); // Prevent unit from becoming too small
+			this.wpm = this.calculateWpm(); // Update WPM based on new unit
+			this.#updateTimeouts(); // Recalculate space timeouts
 			// console.log("Unit updated by Dah:", this.unit.toFixed(1));
 		}
 	}
@@ -198,6 +203,7 @@ class Decoder {
 
 	setFarnsworth(farnsworth) {
         this.farnsworth = farnsworth;
+        this.#updateTimeouts();
     }
 
     getLastLetterTimings() {
@@ -245,10 +251,34 @@ class Decoder {
 		return this.#calculateStats(dataArray);
 	}
 
-    clearStats() {
+    setMode(mode) {
+ 		this.mode = mode;
+ 		console.log("Decoder mode set to:", mode === Decoder.SPEED_TRACKING ? "Adaptive" : "Fixed");
+ 	}
+
+ 	setWpm(wpm) {
+ 		if (this.mode === Decoder.FIXED_SPEED) {
+ 			this.wpm = wpm;
+ 			this.unit = this.calculateUnit(this.wpm);
+ 			this.#updateTimeouts();
+ 		}
+ 	}
+
+ 	clearStats() {
 		this.recentDits = [];
 		this.recentDahs = [];
 		this.recentIntraCharSpaces = [];
 		this.recentInterCharSpaces = [];
  	}
+
+ 	#updateTimeouts() {
+		// Calculate word timeout based on unit length and Farnsworth multiplier
+		// Standard word gap is 7 units. Farnsworth multiplier scales this.
+		// Ensure Farnsworth is at least 1 to avoid zero/negative timeout.
+		const effectiveFarnsworth = Math.max(1, this.farnsworth || 1);
+		this.wordTimeout = this.unit * 7 * effectiveFarnsworth;
+
+		// Recalculate any other timeouts if needed here
+		// console.log(`Updated Timeouts: Unit=${this.unit.toFixed(1)}, FarnsMult=${effectiveFarnsworth}, WordGap=${this.wordTimeout.toFixed(1)}`);
+	}
 }

@@ -64,7 +64,7 @@
                 <div class="control-group">
                     <label for="farnsworth">Farnsworth:</label>
                     <input type="range" id="farnsworth" min="1" max="10" value="2">
-                    <span id="farnsworthValue" class="value-display">2</span>
+                    <span id="farnsworthValue" class="value-display">2x</span>
                 </div>
                 
                 <div class="control-group">
@@ -215,7 +215,7 @@
         // Update displays for settings
         function updateDisplays() {
             document.getElementById('wpmValue').textContent = document.getElementById('wpm').value;
-            document.getElementById('farnsworthValue').textContent = document.getElementById('farnsworth').value;
+            document.getElementById('farnsworthValue').textContent = document.getElementById('farnsworth').value + 'x';
             document.getElementById('toneValue').textContent = document.getElementById('tone').value;
         }
 
@@ -239,14 +239,15 @@
         });
 
         document.getElementById('farnsworth').addEventListener('input', function() {
-            farnsworthValue.textContent = farnsworthSlider.value;
-            decoder.setFarnsworth(parseInt(farnsworthSlider.value));
+            const fwpm = parseInt(farnsworth.value);
+            farnsworthValue.textContent = fwpm + 'x';
+            decoder.setFarnsworth(fwpm);
             updateStatsDisplay(); // Update ideal stats (though Farnsworth mainly affects spaces)
         });
 
         document.getElementById('tone').addEventListener('input', () => {
-            toneValue.textContent = toneSlider.value;
-            sounder.setTone(toneSlider.value);
+            toneValue.textContent = tone.value;
+            sounder.setTone(tone.value);
         });
 
         document.getElementById('mode').addEventListener('change', function() {
@@ -479,7 +480,7 @@
         }
 
         // Initial display update (call after displays are updated initially)
-        // updateDisplays(); // This is already called in the setup logic
+        updateDisplays();
         updateStatsDisplay();
     </script>
 </body>
