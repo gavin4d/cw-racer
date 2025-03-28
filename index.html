@@ -29,10 +29,78 @@
         .timing-key-up { background-color: #eee; /* Light grey for key up */ }
         .timing-element.perfect { opacity: 0.7; }
         h1, h2 { margin-top: 0; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black overlay */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top */
+        }
+
+        .modal {
+            background-color: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 500px; /* Limit modal width */
+            text-align: left;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .modal p,
+        .modal ul {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .modal ul {
+            padding-left: 20px;
+        }
+
+        .modal button {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .modal button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
-    <!-- Removed nav header -->
+    <!-- Instructions Modal -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div id="instructionsModal" class="modal">
+            <h2>Welcome to CW Checker!</h2>
+            <p>This tool allows you to input Morse code with your keyboard or a VBand/Vail adapter. It analyzes what you send and visually compares the ideal timing to your actual sending in the <strong>Timing Comparison</strong> section for the last letter sent.</p>
+            <p><strong>Modes:</strong></p>
+            <ul>
+                <li><strong>Straight Key Mode:</strong> Your WPM is calculated adaptively based on your sending speed.</li>
+                <li><strong>Paddle Modes:</strong> The manual WPM setting is used for timing.</li>
+            </ul>
+            <p><strong>Timing Stats:</strong></p>
+            <p>In the upper right, you'll see stats for recent Dits and Dahs. The blue bar shows the ideal time based on the current WPM setting. Compare this to your actual sending (Avg/Min/Max). A thin line indicates uniform sending; a wider range shows variability.</p>
+            <button id="okButton">OK</button>
+        </div>
+    </div>
 
     <h1>Morse Code Input</h1>
     
@@ -482,6 +550,31 @@
         // Initial display update (call after displays are updated initially)
         updateDisplays();
         updateStatsDisplay();
+
+        // Modal elements
+        const modalOverlay = document.getElementById('modalOverlay');
+        const okButton = document.getElementById('okButton');
+
+        // Modal interaction
+        okButton.addEventListener('click', () => {
+            // Initialize Sounder NOW, after the user gesture
+            const sounder = new Sounder();
+            sounder.setTone(parseInt(document.getElementById('tone').value)); // Set initial tone
+
+            // Hide the modal
+            modalOverlay.style.display = 'none';
+
+            // Now perform the initial UI setup that depends on decoder mode
+            updateDisplays();
+            if (decoder.mode === Decoder.SPEED_TRACKING) {
+                document.getElementById('wpm').disabled = true;
+                document.getElementById('farnsworth').disabled = true;
+            } else {
+                document.getElementById('wpm').disabled = false;
+                document.getElementById('farnsworth').disabled = false;
+            }
+            updateStatsDisplay(); // Initial stat display
+        });
     </script>
 </body>
 </html>
