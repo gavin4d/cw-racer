@@ -92,11 +92,21 @@
             <div class="stat-item">
                 <strong>Dit (ms):</strong>
                 <div>Ideal: <span id="idealDit">--</span></div>
+                <div class="graph-container" id="ditGraphContainer" style="height: 100px; width: 50px; border: 1px solid #eee; position: relative; margin-top: 5px; background-color: #fff;">
+                    <div class="ideal-bar" style="position: absolute; bottom: 0; left: 5px; width: 15px; background-color: lightblue;"></div>
+                    <div class="actual-range-bar" style="position: absolute; left: 30px; width: 15px; background-color: rgba(255, 165, 0, 0.5);"></div>
+                    <div class="actual-avg-marker" style="position: absolute; left: 28px; width: 19px; height: 2px; background-color: orange; transform: translateY(-1px);"></div>
+                </div>
                 <div>Actual (Avg/Min/Max): <span id="actualDit">-- / -- / --</span></div>
             </div>
             <div class="stat-item" style="margin-top: 10px;">
                 <strong>Dah (ms):</strong>
                 <div>Ideal: <span id="idealDah">--</span></div>
+                <div class="graph-container" id="dahGraphContainer" style="height: 100px; width: 50px; border: 1px solid #eee; position: relative; margin-top: 5px; background-color: #fff;">
+                    <div class="ideal-bar" style="position: absolute; bottom: 0; left: 5px; width: 15px; background-color: lightblue;"></div>
+                    <div class="actual-range-bar" style="position: absolute; left: 30px; width: 15px; background-color: rgba(255, 165, 0, 0.5);"></div>
+                    <div class="actual-avg-marker" style="position: absolute; left: 28px; width: 19px; height: 2px; background-color: orange; transform: translateY(-1px);"></div>
+                </div>
                 <div>Actual (Avg/Min/Max): <span id="actualDah">-- / -- / --</span></div>
             </div>
             <!-- Add placeholders for space stats later if needed -->
@@ -298,6 +308,49 @@
 
         // --- Statistics Update Function ---
         let idealDitSpan, actualDitSpan, idealDahSpan, actualDahSpan;
+        let ditGraphContainer, dahGraphContainer; // Add graph containers
+
+        // --- Stat Graph Update Function ---
+        const maxMsForGraph = 400; // e.g., 400ms maps to 100px height
+        function updateStatGraph(containerId, idealMs, stats) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const idealBar = container.querySelector('.ideal-bar');
+            const actualRangeBar = container.querySelector('.actual-range-bar');
+            const actualAvgMarker = container.querySelector('.actual-avg-marker');
+
+            const containerHeight = container.clientHeight; // e.g., 100px
+            const scale = containerHeight / maxMsForGraph;
+
+            // Helper to calculate scaled height/position, capping at container height
+            const getPixels = (ms) => Math.min(containerHeight, Math.max(0, ms * scale));
+
+            // Update Ideal Bar
+            if (idealBar && !isNaN(idealMs)) {
+                idealBar.style.height = `${getPixels(idealMs)}px`;
+            } else if (idealBar) {
+                idealBar.style.height = `0px`;
+            }
+
+            // Update Actual Range Bar and Avg Marker
+            if (actualRangeBar && actualAvgMarker && stats && !isNaN(stats.min) && !isNaN(stats.max) && !isNaN(stats.avg)) {
+                const minPx = getPixels(stats.min);
+                const maxPx = getPixels(stats.max);
+                const avgPx = getPixels(stats.avg);
+
+                actualRangeBar.style.bottom = `${minPx}px`;
+                actualRangeBar.style.height = `${Math.max(1, maxPx - minPx)}px`; // Ensure at least 1px height
+                actualAvgMarker.style.bottom = `${avgPx - 1}px`; // -1 because marker has height 2
+
+                actualRangeBar.style.display = 'block';
+                actualAvgMarker.style.display = 'block';
+            } else if (actualRangeBar && actualAvgMarker) {
+                // Hide if stats are invalid
+                actualRangeBar.style.display = 'none';
+                actualAvgMarker.style.display = 'none';
+            }
+        }
 
         function updateStatsDisplay() {
             const currentWpm = parseInt(document.getElementById('wpm').value);
@@ -305,38 +358,38 @@
 
             idealDitSpan = document.getElementById('idealDit');
             actualDitSpan = document.getElementById('actualDit');
+            ditGraphContainer = document.getElementById('ditGraphContainer'); // Assign graph container
             idealDahSpan = document.getElementById('idealDah');
             actualDahSpan = document.getElementById('actualDah');
+            dahGraphContainer = document.getElementById('dahGraphContainer'); // Assign graph container
 
-            idealDitSpan.textContent = idealTimings.dit.toFixed(0);
-            idealDahSpan.textContent = idealTimings.dah.toFixed(0);
+            // Calculate ideal times
+            const idealDit = idealTimings.dit;
+            const idealDah = idealTimings.dah;
 
-            const recentDits = decoder.getRecentDits();
-            const recentDahs = decoder.getRecentDahs();
+            // Update text displays
+            idealDitSpan.textContent = idealDit.toFixed(0);
+            idealDahSpan.textContent = idealDah.toFixed(0);
 
-            const ditStats = calculateStats(recentDits);
-            const dahStats = calculateStats(recentDahs);
-
-            actualDitSpan.textContent = `${ditStats.avg} / ${ditStats.min} / ${ditStats.max}`;
-            actualDahSpan.textContent = `${dahStats.avg} / ${dahStats.min} / ${dahStats.max}`;
-
-            // TODO: Add display for space stats if desired
-        }
-
-        // Helper to calculate stats from an array
-        function calculateStats(arr) {
-            if (!arr || arr.length === 0) {
-                return { avg: '--', min: '--', max: '--' };
+            // Get Dit stats
+            const ditStats = decoder.getStats('dit');
+            if (ditStats && !isNaN(ditStats.avg)) {
+                actualDitSpan.textContent = `${ditStats.avg} / ${ditStats.min} / ${ditStats.max}`;
+            } else {
+                actualDitSpan.textContent = `-- / -- / --`;
             }
-            const sum = arr.reduce((a, b) => a + b, 0);
-            const avg = (sum / arr.length) || 0;
-            const min = Math.min(...arr);
-            const max = Math.max(...arr);
-            return {
-                avg: avg.toFixed(0),
-                min: min.toFixed(0),
-                max: max.toFixed(0)
-            };
+
+            // Get Dah stats
+            const dahStats = decoder.getStats('dah');
+            if (dahStats && !isNaN(dahStats.avg)) {
+                actualDahSpan.textContent = `${dahStats.avg} / ${dahStats.min} / ${dahStats.max}`;
+            } else {
+                actualDahSpan.textContent = `-- / -- / --`;
+            }
+
+            // Update the graphs
+            updateStatGraph('ditGraphContainer', idealDit, ditStats);
+            updateStatGraph('dahGraphContainer', idealDah, dahStats);
         }
 
         // --- Morse Timing Calculations (Ideal) ---
@@ -427,6 +480,7 @@
 
         // Initial display update (call after displays are updated initially)
         // updateDisplays(); // This is already called in the setup logic
+        updateStatsDisplay();
     </script>
 </body>
 </html>

@@ -47,11 +47,29 @@ const morseToAlphabet = new Map([
 ]);
 
 class Decoder {
-	constructor(onLetterDecoded) {
+	static FIXED_SPEED = 1; // User sets speed, decoder uses it strictly
+	static SPEED_TRACKING = 2; // Decoder adjusts speed based on user input
+
+	// --- Calculation Methods --- Moved Up ---
+	calculateUnit(wpm) {
+		if (wpm <= 0) return 80; // Default to ~15 WPM if invalid
+		return 1200 / wpm; // Standard PARIS method unit length
+	}
+
+	calculateWpm() {
+		if (this.unit <= 0) return 15; // Default to 15 if unit is invalid
+		return 1200 / this.unit;
+	}
+
+	// --- Constructor ---
+	constructor(onLetterDecoded, options = {}) {
 		this.onLetterDecoded = onLetterDecoded; // Store the callback function
 		this.lastLetter = '';
 		this.decodeArray = ''; // Stores '1' for dit, '2' for dah
-		this.unit = 80; // adjustment: short dit reduces, long dah lengthens
+		this.unitAverageWeight = options.unitAverageWeight || 5; // How much history to average for unit estimation
+		this.mode = options.mode !== undefined ? options.mode : Decoder.SPEED_TRACKING;
+		this.wpm = options.wpm || 15;
+		this.unit = this.calculateUnit(this.wpm); // Initial unit length in ms
 		this.keyStartTime = null; // Timestamp when key went down
 		this.keyEndTime = null;   // Timestamp when key went up
 		this.spaceTimer = null;
@@ -83,9 +101,9 @@ class Decoder {
 			// Simple classification (can be refined): > 2 units = inter-char, otherwise intra-char
 			// TODO: Refine space classification using Farnsworth setting
 			if (spaceDuration > this.unit * 2) { // Arbitrary threshold for now
-				this.addTimingStat(this.recentInterCharSpaces, spaceDuration);
+				this.#addTimingStat(this.recentInterCharSpaces, spaceDuration);
 			} else if (spaceDuration > this.unit * 0.4) { // Avoid tiny spaces from key bounce (0.4 * unit)
-				this.addTimingStat(this.recentIntraCharSpaces, spaceDuration);
+				this.#addTimingStat(this.recentIntraCharSpaces, spaceDuration);
 				// Also store for visual bar
 				this.currentLetterTimings.push({ type: 'space', duration: spaceDuration });
 			}
@@ -103,11 +121,11 @@ class Decoder {
 			// Classify based on comparison to unit length (e.g., midpoint)
 			const ditDahThreshold = this.unit * 2; // ~ midpoint between dit (1) and dah (3)
 			if (keyDuration < ditDahThreshold) {
-				this.addTimingStat(this.recentDits, keyDuration); // Store duration
-				this.registerDit(); // Register first to potentially adjust unit
+				this.#addTimingStat(this.recentDits, keyDuration); // Store duration
+				this.registerDit(keyDuration); // Pass duration for potential unit adjustment
 			} else {
-				this.addTimingStat(this.recentDahs, keyDuration); // Store duration
-				this.registerDah(); // Register first to potentially adjust unit
+				this.#addTimingStat(this.recentDahs, keyDuration); // Store duration
+				this.registerDah(keyDuration); // Pass duration for potential unit adjustment
 			}
 			// Also store for visual bar
 			this.currentLetterTimings.push({ type: 'mark', duration: keyDuration });
@@ -123,14 +141,26 @@ class Decoder {
 		}, spaceTime, "keyOff");
 	}
 
-	registerDit() {
-		// Logic moved to keyOff for timing capture before unit adjustment
-		 this.decodeArray += '1';
+	registerDit(duration) {
+		this.decodeArray += '1';
+		if (this.mode === Decoder.SPEED_TRACKING && duration > 0) {
+			// Update unit based on this dit (simple weighted average)
+			// Give more weight to history to avoid wild swings
+			this.unit = (this.unit * (this.unitAverageWeight - 1) + duration) / this.unitAverageWeight;
+			this.unit = Math.max(20, this.unit); // Prevent unit from becoming too small (e.g. > 60 WPM)
+			// console.log("Unit updated by Dit:", this.unit.toFixed(1));
+		}
 	}
 
-	registerDah() {
-		// Logic moved to keyOff for timing capture before unit adjustment
-		 this.decodeArray += '2';
+	registerDah(duration) {
+		this.decodeArray += '2';
+		if (this.mode === Decoder.SPEED_TRACKING && duration > 0) {
+			// Update unit based on this dah (dah is 3 units, so estimate unit as duration/3)
+			const estimatedUnit = duration / 3;
+			this.unit = (this.unit * (this.unitAverageWeight - 1) + estimatedUnit) / this.unitAverageWeight;
+			this.unit = Math.max(20, this.unit); // Prevent unit from becoming too small
+			// console.log("Unit updated by Dah:", this.unit.toFixed(1));
+		}
 	}
 
 	updateLastLetter(letter) {
@@ -166,11 +196,7 @@ class Decoder {
 		}, this.wordTimeout);
 	}
 
-    calculateWpm() {
-        return 60000 / (this.unit * 50);
-    }
-
-    setFarnsworth(farnsworth) {
+	setFarnsworth(farnsworth) {
         this.farnsworth = farnsworth;
     }
 
@@ -178,22 +204,48 @@ class Decoder {
 		return this.lastLetterTimings;
     }
 
-    // Helper to add timing to stats array, keeping max history
-	addTimingStat(array, duration) {
-		array.push(duration);
+    #addTimingStat(array, duration) { // Make private helper
+		// Convert duration to integer ms before storing
+		const durationMs = Math.round(duration);
+		array.push(durationMs);
 		if (array.length > this.maxHistory) {
-			array.shift(); // Remove the oldest entry
+			array.shift(); // Remove oldest
 		}
 	}
 
-    // Getters for recent timings
-	getRecentDits() { return this.recentDits; }
-	getRecentDahs() { return this.recentDahs; }
-	getRecentIntraCharSpaces() { return this.recentIntraCharSpaces; }
-	getRecentInterCharSpaces() { return this.recentInterCharSpaces; }
+	#calculateStats(arr) {
+		if (!arr || arr.length === 0) {
+			return { avg: NaN, min: NaN, max: NaN };
+		}
+		const sum = arr.reduce((a, b) => a + b, 0);
+		const avg = Math.round(sum / arr.length);
+		const min = Math.round(Math.min(...arr));
+		const max = Math.round(Math.max(...arr));
+		return { avg, min, max };
+	}
 
-    // Method to clear stats
-	clearStats() {
+	getStats(type) {
+		let dataArray;
+		switch (type) {
+			case 'dit':
+				dataArray = this.recentDits;
+				break;
+			case 'dah':
+				dataArray = this.recentDahs;
+				break;
+			case 'intraCharSpace':
+				dataArray = this.recentIntraCharSpaces;
+				break;
+			case 'interCharSpace':
+				dataArray = this.recentInterCharSpaces;
+				break;
+			default:
+				dataArray = [];
+		}
+		return this.#calculateStats(dataArray);
+	}
+
+    clearStats() {
 		this.recentDits = [];
 		this.recentDahs = [];
 		this.recentIntraCharSpaces = [];
