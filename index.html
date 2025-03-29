@@ -563,21 +563,21 @@
         }
 
         function updateStatsDisplay() {
-            const currentWpm = parseInt(document.getElementById('wpm').value);
-            const idealTimings = getIdealTiming('', currentWpm); // Get ideal dit/dah times
+            const calculatedUnit = decoder.unit; // Use the decoder's current unit
 
-            idealDitSpan = document.getElementById('idealDit');
-            actualDitSpan = document.getElementById('actualDit');
-            ditGraphContainer = document.getElementById('ditGraphContainer'); // Assign graph container
-            idealDahSpan = document.getElementById('idealDah');
-            actualDahSpan = document.getElementById('actualDah');
-            dahGraphContainer = document.getElementById('dahGraphContainer'); // Assign graph container
+            // Get the elements if not already fetched (could be done once outside)
+            if (!idealDitSpan) idealDitSpan = document.getElementById('idealDit');
+            if (!idealDahSpan) idealDahSpan = document.getElementById('idealDah');
+            if (!actualDitSpan) actualDitSpan = document.getElementById('actualDit');
+            if (!actualDahSpan) actualDahSpan = document.getElementById('actualDah');
+            if (!ditGraphContainer) ditGraphContainer = document.getElementById('ditGraphContainer'); // Assign graph container
+            if (!dahGraphContainer) dahGraphContainer = document.getElementById('dahGraphContainer'); // Assign graph container
 
-            // Calculate ideal times
-            const idealDit = idealTimings.dit;
-            const idealDah = idealTimings.dah;
+            // Calculate ideal timings based on decoder's unit
+            const idealDit = calculatedUnit; 
+            const idealDah = calculatedUnit * 3;
 
-            // Update text displays
+            // Update the ideal timing text display
             idealDitSpan.textContent = idealDit.toFixed(0);
             idealDahSpan.textContent = idealDah.toFixed(0);
 
