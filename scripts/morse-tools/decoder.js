@@ -117,6 +117,13 @@ class Decoder {
 		var keyDuration = (this.keyStartTime) ? this.keyEndTime - this.keyStartTime : 0;
 
 		// Record the mark duration
+		const MIN_MARK_DURATION = 10; // ms - Filter out key bounce/noise
+		if (keyDuration < MIN_MARK_DURATION) {
+			console.log(`Ignoring mark duration ${keyDuration}ms (too short)`);
+			this.keyStartTime = null; // Prevent space calculation based on this noisy keyOff
+			return; // Ignore this key press entirely
+		}
+
 		// Classify and record mark duration
 		if (keyDuration > 0) {
 			// Classify based on comparison to unit length (e.g., midpoint)
@@ -136,6 +143,7 @@ class Decoder {
 
         let spaceTime = this.unit * 2; // Fixed 2-unit gap for robust letter end detection
 		this.spaceTimer = setTimeout(() => { // end sequence and decode letter
+			console.log(`Decoding: '${this.decodeArray}'`);
 			this.updateLastLetter(this.morseToLetter(this.decodeArray));
 			this.decodeArray = ''; // Clear pattern *after* decoding
 			this.startWordTimer(); // Start the word timer after finishing a letter
