@@ -83,6 +83,121 @@
         .modal button:hover {
             background-color: #0056b3;
         }
+
+        /* Styling for timing stats graphs */
+        .graph-container { height: 50px; width: 80px; border: 1px solid #ccc; position: relative; background-color: #fff; margin-top: 5px; }
+        /* General stats layout */
+        .stats-section {
+            display: flex; /* Arrange stats containers side-by-side */
+            gap: 20px; /* Space between containers */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            margin-top: 20px;
+        }
+
+        .stats-container {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa; /* Light grey background */
+            min-width: 250px; /* Ensure some minimum width */
+            flex: 1; /* Allow containers to grow */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stats-container h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .stat-description {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: -5px; /* Pull up slightly */
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            /* Default margin - might be overridden */
+            margin-bottom: 15px; 
+        }
+
+        .ideal-bar { position: absolute; bottom: 0; left: 10%; width: 30%; background-color: #a0d8ef; /* Lighter blue */ }
+        .actual-range-bar { position: absolute; left: 60%; width: 30%; background-color: #ffe8cc; /* Lighter orange */ }
+
+        /* Dit:Dah Ratio Styles */
+        .ratio-display {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .ideal-value {
+            font-weight: bold;
+            color: #007bff; /* Blue for ideal */
+        }
+
+        .actual-value {
+            font-weight: bold;
+            color: #fd7e14; /* Orange for actual */
+        }
+
+        /* Visual Bar for Ratio */
+        .ratio-visual-bar-container {
+            position: relative;
+            height: 15px; /* Height of the bar area */
+            width: 100%;
+            background-color: #e9ecef; /* Background of the bar */
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden; /* Ensure markers stay within bounds */
+        }
+
+        .ratio-bar { /* Optional: Can be used for gradients or other effects later */
+            height: 100%;
+            width: 100%;
+        }
+
+        .ratio-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 3px; /* Width of the marker line */
+            transform: translateX(-1.5px); /* Center the marker */
+            border-radius: 1px;
+        }
+
+        .ratio-marker.ideal {
+            background-color: #007bff; /* Blue */
+            /* Position will be set by JS based on 3.0 */
+        }
+
+        .ratio-marker.actual {
+            background-color: #fd7e14; /* Orange */
+            /* Position will be set by JS */
+        }
+
+        /* Specific layout for Timing Stats Dit/Dah */
+        #timing-stats {
+            display: flex;
+            gap: 20px; /* Space between Dit and Dah columns */
+            align-items: flex-start; /* Align columns to the top */
+        }
+
+        #timing-stats .stat-item {
+            flex: 1; /* Each column takes equal space */
+            margin-top: 0 !important; /* Override inline style */
+            margin-bottom: 0; /* Remove bottom margin within this container */
+        }
+
+        /* Ensure heading spans across if needed, or adjust structure */
+        #timing-stats h2, #timing-stats .stat-description {
+            width: 100%; /* Make header/description span full width */
+            flex-basis: 100%; /* Required for width: 100% in flex column */
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -157,27 +272,50 @@
 
         <div class="stats-panel" style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
             <h2>Timing Stats (Last 20)</h2>
-            <div class="stat-item">
-                <strong>Dit (ms):</strong>
-                <div>Ideal: <span id="idealDit">--</span></div>
-                <div class="graph-container" id="ditGraphContainer" style="height: 100px; width: 50px; border: 1px solid #eee; position: relative; margin-top: 5px; background-color: #fff;">
-                    <div class="ideal-bar" style="position: absolute; bottom: 0; left: 5px; width: 15px; background-color: lightblue;"></div>
-                    <div class="actual-range-bar" style="position: absolute; left: 30px; width: 15px; background-color: rgba(255, 165, 0, 0.5);"></div>
-                    <div class="actual-avg-marker" style="position: absolute; left: 28px; width: 19px; height: 2px; background-color: orange; transform: translateY(-1px);"></div>
+            <div class="stats-section">
+                <div id="timing-stats" class="stats-container">
+                    <h2>Timing Stats</h2>
+                    <p class="stat-description">Compares avg/min/max of recent elements to ideal duration at current WPM.</p>
+                    <div class="stat-item">
+                        <strong>Dit (ms):</strong>
+                        <div>Ideal: <span id="idealDit">--</span></div>
+                        <div class="graph-container" id="ditGraphContainer" style="height: 100px; width: 50px; border: 1px solid #eee; position: relative; margin-top: 5px; background-color: #fff;">
+                            <div class="ideal-bar" style="position: absolute; bottom: 0; left: 5px; width: 15px; background-color: lightblue;"></div>
+                            <div class="actual-range-bar" style="position: absolute; left: 30px; width: 15px; background-color: rgba(255, 165, 0, 0.5);"></div>
+                            <div class="actual-avg-marker" style="position: absolute; left: 28px; width: 19px; height: 2px; background-color: orange; transform: translateY(-1px);"></div>
+                        </div>
+                        <div>Actual (Avg/Min/Max): <span id="actualDit">-- / -- / --</span></div>
+                    </div>
+                    <div class="stat-item" style="margin-top: 10px;">
+                        <strong>Dah (ms):</strong>
+                        <div>Ideal: <span id="idealDah">--</span></div>
+                        <div class="graph-container" id="dahGraphContainer" style="height: 100px; width: 50px; border: 1px solid #eee; position: relative; margin-top: 5px; background-color: #fff;">
+                            <div class="ideal-bar" style="position: absolute; bottom: 0; left: 5px; width: 15px; background-color: lightblue;"></div>
+                            <div class="actual-range-bar" style="position: absolute; left: 30px; width: 15px; background-color: rgba(255, 165, 0, 0.5);"></div>
+                            <div class="actual-avg-marker" style="position: absolute; left: 28px; width: 19px; height: 2px; background-color: orange; transform: translateY(-1px);"></div>
+                        </div>
+                        <div>Actual (Avg/Min/Max): <span id="actualDah">-- / -- / --</span></div>
+                    </div>
+                    <!-- Add placeholders for space stats later if needed -->
                 </div>
-                <div>Actual (Avg/Min/Max): <span id="actualDit">-- / -- / --</span></div>
-            </div>
-            <div class="stat-item" style="margin-top: 10px;">
-                <strong>Dah (ms):</strong>
-                <div>Ideal: <span id="idealDah">--</span></div>
-                <div class="graph-container" id="dahGraphContainer" style="height: 100px; width: 50px; border: 1px solid #eee; position: relative; margin-top: 5px; background-color: #fff;">
-                    <div class="ideal-bar" style="position: absolute; bottom: 0; left: 5px; width: 15px; background-color: lightblue;"></div>
-                    <div class="actual-range-bar" style="position: absolute; left: 30px; width: 15px; background-color: rgba(255, 165, 0, 0.5);"></div>
-                    <div class="actual-avg-marker" style="position: absolute; left: 28px; width: 19px; height: 2px; background-color: orange; transform: translateY(-1px);"></div>
+                <!-- New Ratio Stats Container -->
+                <div id="ratio-stats" class="stats-container">
+                    <h2>Dit:Dah Ratio</h2>
+                    <p class="stat-description">Checks if average Dah duration is 3x average Dit duration.</p>
+                    <div class="ratio-display">
+                        Ideal: <span class="ideal-value">1 : 3.00</span>
+                    </div>
+                    <div class="ratio-display">
+                        Actual: <span id="actualRatioValue" class="actual-value">1 : ---</span>
+                    </div>
+                    <!-- Placeholder for a potential visual bar -->
+                    <div id="ratio-visual" class="ratio-visual-bar-container">
+                        <div id="ratio-bar" class="ratio-bar"></div>
+                        <div id="ratio-ideal-marker" class="ratio-marker ideal"></div>
+                        <div id="ratio-actual-marker" class="ratio-marker actual"></div>
+                    </div>
                 </div>
-                <div>Actual (Avg/Min/Max): <span id="actualDah">-- / -- / --</span></div>
             </div>
-            <!-- Add placeholders for space stats later if needed -->
         </div>
     </div>
 
@@ -378,6 +516,9 @@
         // --- Statistics Update Function ---
         let idealDitSpan, actualDitSpan, idealDahSpan, actualDahSpan;
         let ditGraphContainer, dahGraphContainer; // Add graph containers
+        const actualRatioValue = document.getElementById('actualRatioValue');
+        const ratioIdealMarker = document.getElementById('ratio-ideal-marker');
+        const ratioActualMarker = document.getElementById('ratio-actual-marker');
 
         // --- Stat Graph Update Function ---
         const maxMsForGraph = 400; // e.g., 400ms maps to 100px height
@@ -459,6 +600,57 @@
             // Update the graphs
             updateStatGraph('ditGraphContainer', idealDit, ditStats);
             updateStatGraph('dahGraphContainer', idealDah, dahStats);
+
+            // --- Calculate and Display Ratio --- //
+            let actualRatio = NaN;
+            let ratioText = "1 : ---";
+
+            if (ditStats.avg > 0 && dahStats.avg > 0) {
+                actualRatio = dahStats.avg / ditStats.avg;
+                ratioText = `1 : ${actualRatio.toFixed(2)}`;
+            } else if (dahStats.avg > 0) {
+                ratioText = "1 : ∞"; // Dits are zero length?
+            } // else Keep "1 : ---" if no dahs or dits
+
+            actualRatioValue.textContent = ratioText;
+
+            // --- Update Ratio Visual Bar --- //
+            const idealRatio = 3.0;
+            // Define the scale for the visual bar (e.g., ratios 1.0 to 5.0 map to 0% to 100%)
+            const minRatioScale = 1.0;
+            const maxRatioScale = 5.0;
+            const scaleRange = maxRatioScale - minRatioScale;
+
+            // Calculate position (0% to 100%) clamping within the scale
+            const calculatePosition = (ratio) => {
+                if (isNaN(ratio) || scaleRange <= 0) return 50; // Default to middle if invalid
+                const clampedRatio = Math.max(minRatioScale, Math.min(maxRatioScale, ratio));
+                return ((clampedRatio - minRatioScale) / scaleRange) * 100;
+            };
+
+            const idealPosition = calculatePosition(idealRatio);
+            const actualPosition = calculatePosition(actualRatio);
+
+            ratioIdealMarker.style.left = `${idealPosition}%`;
+            ratioActualMarker.style.left = `${actualPosition}%`;
+
+            // Optional: Change color based on proximity to ideal
+            const tolerance = 0.35; // e.g., ratio between 2.8 and 3.2 is good
+            let actualColor = '#6c757d'; // Default to grey
+
+            if (isNaN(actualRatio)) {
+                actualColor = '#6c757d'; // Grey if no data
+                ratioActualMarker.style.left = '50%'; // Center if no data
+            } else if (Math.abs(actualRatio - idealRatio) <= tolerance) {
+                actualColor = '#28a745'; // Green for good
+            } else if (Math.abs(actualRatio - idealRatio) <= tolerance * 2) {
+                actualColor = '#fd7e14'; // Orange for okay
+            } else {
+                actualColor = '#dc3545'; // Red for far off
+            }
+
+            ratioActualMarker.style.backgroundColor = actualColor;
+            actualRatioValue.style.color = actualColor; // Apply the same color to the text
         }
 
         // --- Morse Timing Calculations (Ideal) ---
@@ -496,8 +688,7 @@
 
             let timings = [];
             let isFirstElement = true;
-            for (let i = 0; i < patternString.length; i++) {
-                const element = patternString[i];
+            for (const element of patternString) {
                 if (!isFirstElement) {
                     // Add intra-character space
                     timings.push({ type: 'space', duration: intraCharSpace });
