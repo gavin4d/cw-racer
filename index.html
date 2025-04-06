@@ -460,8 +460,11 @@
         });
 
         document.getElementById('tone').addEventListener('input', () => {
-            toneValue.textContent = tone.value;
-            sounder.setTone(tone.value);
+            const newTone = parseInt(document.getElementById('tone').value);
+            document.getElementById('toneValue').textContent = newTone;
+            sounder.setTone(newTone);
+            keyer.setTone(newTone);  // Add this line to update the keyer's tone too
+            saveSettings();  // Save the setting
         });
 
         document.getElementById('mode').addEventListener('change', function() {
