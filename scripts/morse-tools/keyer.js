@@ -24,6 +24,9 @@ class Keyer {
         this.dahStop = null;
         this.sending = false;
         this.lastSendTimestamp = null;
+        // Track active keys in straight key mode to handle multiple simultaneous key presses
+        this.straightKeyActive = false;
+        this.activeKeys = new Set();
         this.oscillatorTimer = setInterval(() => {
             this.oscillate();
         }, 0);
@@ -67,21 +70,36 @@ class Keyer {
     press(event, down, mode=this.mode) {
         if (mode > 1 && event.code != this.ditKey1 && event.code != this.dahKey1 && event.code != this.ditKey2 && event.code != this.dahKey2) return;
         if (mode == 1) {
-            // In straight key mode, only respond to ditKey1 (ControlLeft) or ditKey2 (BracketLeft)
-            // This prevents issues when both Control keys are pressed simultaneously
-            if (event.code != this.ditKey1 && event.code != this.ditKey2) return;
+            // In straight key mode, handle all four possible keys
+            const isValidKey = event.code === this.ditKey1 || event.code === this.dahKey1 || 
+                            event.code === this.ditKey2 || event.code === this.dahKey2;
+            if (!isValidKey) return;
             
             if (down) {
-                if (restartAudioNeeded()) {
-                    restartAudio();
+                // Add this key to our active keys set
+                this.activeKeys.add(event.code);
+                
+                // If we're not already active, turn on the sound
+                if (!this.straightKeyActive) {
+                    if (restartAudioNeeded()) {
+                        restartAudio();
+                    }
+                    this.straightKeyActive = true;
+                    this.sndr.setTone(this.tone);
+                    this.sndr.on();
+                    this.decoder.keyOn();
                 }
-                this.sndr.setTone(this.tone);
-                this.sndr.on();
-                this.decoder.keyOn();
-
+                // If already active, do nothing (prevents double triggering)
             } else {
-                this.sndr.off();
-                this.decoder.keyOff();
+                // Remove this key from our active keys set
+                this.activeKeys.delete(event.code);
+                
+                // Only turn off sound if ALL keys are released
+                if (this.activeKeys.size === 0) {
+                    this.straightKeyActive = false;
+                    this.sndr.off();
+                    this.decoder.keyOff();
+                }
             }
         } else if (mode > 1) {
             //console.log(key);
