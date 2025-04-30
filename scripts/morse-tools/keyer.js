@@ -67,6 +67,10 @@ class Keyer {
     press(event, down, mode=this.mode) {
         if (mode > 1 && event.code != this.ditKey1 && event.code != this.dahKey1 && event.code != this.ditKey2 && event.code != this.dahKey2) return;
         if (mode == 1) {
+            // In straight key mode, only respond to ditKey1 (ControlLeft) or ditKey2 (BracketLeft)
+            // This prevents issues when both Control keys are pressed simultaneously
+            if (event.code != this.ditKey1 && event.code != this.ditKey2) return;
+            
             if (down) {
                 if (restartAudioNeeded()) {
                     restartAudio();
