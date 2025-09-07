@@ -1,0 +1,692 @@
+:root {
+  --padding: 24px;
+}
+
+* {
+  --bg: #fff8f6;
+  --panel-bg: hsl(7, 25%, 88%);
+  --text: #1f1f1f;
+  --text-incomplete: #999;
+  --accent1: hsl(191, 35%, 70%);
+  --accent1-dark: hsl(191, 35%, 40%);
+  --accent2: hsl(3, 50%, 50%);
+  --accent2-dark: hsl(3, 50%, 20%);
+
+  --shadow: 16px 16px 16px 0px rgba(0, 0, 0, 20%);
+  --shadow-small: 0 1px 3px rgba(0, 0, 0, 15%)
+}
+
+:has(#dark:checked) * {
+  --bg: #222;
+  --panel-bg: #333;
+  --text: #bbb;
+  --text-incomplete: #777;
+  --accent1: hsl(191, 35%, 40%);
+  --accent1-dark: hsl(191, 35%, 60%);
+  --accent2: hsl(3, 50%, 60%);
+  --accent2-dark: hsl(3, 50%, 20%);
+}
+
+:has(#neuromorphic:checked) * {
+  --bg: #e1e1e1;
+  --panel-bg: var(--bg);
+  --shadow: 8px 8px 16px 0px color-mix(in srgb, var(--bg) 70%, black), -8px -8px 16px 0px color-mix(in srgb, var(--bg) 5%, white);
+  /* --shadow: 8px 8px 16px 0px #bebebe, -8px -8px 16px 0px #ffffff; */
+  --shadow-small: 2px 2px 4px 0px color-mix(in srgb, var(--bg) 70%, black) inset, -2px -2px 4px 0px color-mix(in srgb, var(--bg) 5%, white) inset;
+}
+
+body {
+  font-family: 'Courier New', Courier, monospace;
+  display: flex;
+  margin-top: 10vh;
+  background: var(--bg);
+  color: var(--text);
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5em;
+}
+
+button {
+  background: var(--bg);
+  color: var(--text);
+  transition: 0.2s;
+  border-width: 0;
+  border-radius: var(--padding);
+  box-shadow: var(--shadow-small);
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+input:hover {
+  /* box-shadow: 4px 4px 8px 0px color-mix(in srgb, var(--bg) 70%, black), -4px -4px 8px 0px color-mix(in srgb, var(--bg) 95%, white); */
+}
+
+button:active {
+  /* box-shadow: 4px 4px 8px 4px color-mix(in srgb, var(--bg) 70%, black), -4px -4px 8px 4px color-mix(in srgb, var(--bg) 95%, white); */
+  box-shadow: none;
+
+}
+
+.hidden {
+  display: none !important;
+}
+
+.svg-icon {
+  fill: currentColor;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  padding-block: 0;
+  padding-inline: 0;
+  margin-inline: 0;
+}
+
+.mode-selector input {
+  position: absolute;
+  visibility: hidden;
+  display: none;
+  opacity: 0;
+  z-index: -1;
+}
+
+.mode-selector label {
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  transition: 0.2s;
+  flex-grow: 0;
+  border-width: 0;
+  border-radius: 32px;
+  padding: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 700;
+  line-height: 1.5;
+  box-shadow: var(--shadow-small);
+}
+
+.material-symbols-rounded {
+  margin-top: 0.5px;
+  margin-left: 0.5px;
+}
+
+input:hover+label {
+  filter: brightness(95%);
+}
+
+.mode-selector input:checked+label {
+  background: var(--accent1);
+}
+
+#copy-mode+label {
+  flex-grow: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-inline-end: calc(-1 * var(--padding) / 4);
+}
+
+#send-mode+label {
+  flex-grow: 1;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-inline-start: calc(-1 * var(--padding) / 4);
+}
+
+#clear-button {
+  background: none;
+  margin-bottom: -10px;
+  padding: 8px 15px;
+  box-shadow: none;
+  /* width: fit-content; */
+}
+
+.panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  width: 60%;
+  min-width: min(700px, calc(100vw - 32px));
+  padding: var(--padding);
+  border-radius: 32px;
+  background-color: var(--panel-bg);
+  box-shadow: var(--shadow);
+  /* opacity: 1; */
+  /* visibility: visible; */
+  /* margin-top: 0px; */
+  /* transition-duration: 200ms, 200ms, 0; */
+  /* transition-property: opacity, top, visibility; */
+  /* transition-delay: 200ms, 200ms, 0; */
+}
+
+:has(#settings-toggle:not(:checked)) .settings-panel,
+:has(#settings-toggle:checked) .input-panel,
+:has(#settings-toggle:checked) .target-input,
+:has(#targetInput.ended) .input-panel,
+:has(#copy-mode:checked) .input-panel,
+:has(#settings-toggle:checked) .stats-panel {
+  display: none;
+  /* position: fixed; */
+  /* opacity: 0; */
+  /* visibility: hidden; */
+  /* margin-top: -10px; */
+  /* transition-duration: 200ms, 200ms, 0; */
+  /* transition-property: opacity, top, visibility; */
+  /* transition-delay: 0, 0, 200ms; */
+}
+
+.mode-selector {
+  flex-direction: row;
+  gap: calc(var(--padding) / 2);
+  padding: calc(var(--padding) / 2);
+}
+
+.mode-selector button {
+  flex-grow: 1;
+}
+
+.settings-panel {
+  flex-direction: column;
+  gap: var(--padding);
+}
+
+.settings-group {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  accent-color: var(--accent1);
+  gap: calc(var(--padding) / 2);
+}
+
+.settings-group label {
+  color: var(--text);
+  width: 15em;
+  text-align: right;
+}
+
+.settings-group .multiselect label {
+  text-align: left;
+  width: 8em;
+}
+
+.settings-group select {
+  cursor: pointer;
+}
+
+.settings-group select,
+.settings-group input[type="number"] {
+  font-family: inherit;
+  color: var(--text);
+  height: 32px;
+  background-color: var(--bg);
+  border-width: 0;
+  border-radius: 12px;
+  padding: 4px 8px 4px 8px;
+  box-shadow: var(--shadow-small);
+}
+
+.settings-group input[type="file"]+label {
+  height: 32px;
+  width: 150px;
+  background-color: var(--bg);
+  border-width: 0;
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  transition: 0.2s;
+  box-shadow: var(--shadow-small);
+  cursor: pointer;
+}
+
+/* .settings-group input[type="file"][value=""]+label { */
+/* background-color: var(--accent1); */
+/* } */
+
+.settings-group input[type="file"] {
+  display: none;
+}
+
+.settings-group input[type="checkbox"],
+.settings-group input[type="radio"] {
+  width: 24px;
+  height: 24px;
+  background-color: var(--bg);
+  cursor: pointer;
+}
+
+.value-display {
+  font-weight: bold;
+  min-width: 30px;
+  text-align: left;
+}
+
+input[type="range"] {
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.carrots-crate {
+  position: relative;
+  align-self: flex-start;
+  left: 0;
+  width: 0;
+  height: 0;
+}
+
+.carets {
+  height: 1.15em;
+  width: 4px;
+  border-radius: 2px;
+  position: absolute;
+  transition: 0.1s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 60%);
+}
+
+#caret {
+  background: var(--accent2);
+}
+
+#soundCaret {
+  background: var(--accent1);
+}
+
+:has(#spaces-toggle:checked) word {
+  display: inline-block;
+  margin-right: calc(47 / 78 * 1em);
+}
+
+word.error:not(.active) {
+  color: var(--accent2);
+  text-decoration: underline;
+}
+
+/* :has(#spaces-toggle:not(:checked)) letter { */
+/* border-radius: 0 !important; */
+/* } */
+
+:has(#copy-mode:checked) :has(#targetInput:not(.ended)) letter {
+  background-color: var(--text-incomplete);
+}
+
+/* These might be the most fucked selectors I have ever written */
+:has(#copy-mode:checked) letter.correct+letter,
+:has(#copy-mode:checked) word:has(:last-child.correct)+word>letter:first-child,
+:has(#spaces-toggle:checked) :has(#copy-mode:checked) letter:first-child,
+:has(#copy-mode:checked) word:first-child>letter:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+:has(#spaces-toggle:checked) :has(#copy-mode:checked) letter:nth-last-child(2),
+:has(#copy-mode:checked) word:last-child>letter:nth-last-child(2),
+:has(#copy-mode:checked) letter:has(+.correct) {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+:has(#copy-mode:checked) letter.correct {
+  background-color: transparent !important;
+}
+
+:has(#copy-mode:checked) :has(#targetInput:not(.ended)) letter.incorrect:not(.correct) {
+  background-color: var(--accent2);
+}
+
+letter {
+  color: var(--text-incomplete);
+}
+
+letter:empty {
+  display: inline-block;
+  height: .95em;
+}
+
+letter.correct {
+  color: var(--text);
+}
+
+letter.late:not(.correct),
+:has(#targetInput.ended) letter.late {
+  color: var(--accent1-dark);
+}
+
+letter.incorrect:not(.correct),
+:has(#targetInput.ended) letter.incorrect {
+  color: var(--accent2);
+}
+
+.target-input {
+  font-family: monospace;
+  line-height: 1.8;
+  font-size: 2.25em;
+  text-transform: uppercase;
+  /* justify-content: center; */
+  align-items: center;
+  flex-direction: column;
+}
+
+.instructions {
+  text-transform: none;
+}
+
+:has(#targetInput:not(.started)) .show-on-start,
+:has(#targetInput.started) .instructions.show-in-send,
+:has(#targetInput.started) .instructions.show-in-copy,
+:has(#copy-mode:checked) .instructions.show-in-send,
+:has(#send-mode:checked) .instructions.show-in-copy {
+  display: none;
+}
+
+.keybind {
+  display: inline-block;
+  background-color: var(--bg);
+  border-radius: 4px;
+  padding: 2px 3px 3px 3px;
+  min-width: 1em;
+  box-shadow: var(--shadow-small);
+}
+
+#mobileInput {
+  height: 0;
+  width: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+}
+
+.input-panel {
+  display: flex;
+  flex-direction: row;
+  gap: var(--padding);
+}
+
+.num-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: calc(var(--padding) / 2);
+  background: var(--bg);
+  padding: var(--padding);
+  flex-direction: column;
+  font-size: 2.25em;
+  min-width: 1em;
+  height: 1em;
+  box-shadow: var(--shadow-small);
+}
+
+.num-display label {
+  color: var(--text-incomplete);
+  font-size: 10px;
+  margin-bottom: 4px;
+  width: max-content;
+}
+
+.timing-container {
+  flex-grow: 2;
+}
+
+.timing-row {
+  height: 50%;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 30px;
+}
+
+.timing-label {
+  width: 64px;
+  font-size: 0.9em;
+  text-align: right;
+}
+
+.timing-bar {
+  display: flex;
+  flex-grow: 1;
+  height: 2em;
+  border-radius: calc(var(--padding) / 2);
+  background-color: var(--bg);
+  overflow: hidden;
+  box-shadow: var(--shadow-small);
+}
+
+.timing-element {
+  height: 100%;
+}
+
+.timing-key-down {
+  background-color: var(--accent1);
+  border-radius: calc(var(--padding) / 2);
+  box-shadow: var(--shadow-small);
+}
+
+.timing-key-up {
+  background-color: transparent;
+}
+
+.mobile-buttons button {
+  padding: var(--padding);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.1s;
+}
+
+.mobile-buttons button:active {
+  background: var(--accent1);
+}
+
+.mobile-buttons svg {
+  height: 1em;
+  width: auto;
+}
+
+.timing-element.perfect {
+  opacity: 0.7;
+}
+
+/* Styling for timing stats graphs */
+.graph-container {
+  height: 50px;
+  width: 80px;
+  border: 1px solid #ccc;
+  position: relative;
+  background-color: var(--bg);
+  margin-top: 5px;
+}
+
+/* General stats layout */
+.stats-section {
+  display: flex;
+  /* Arrange stats containers side-by-side */
+  gap: 20px;
+  /* Space between containers */
+  flex-wrap: wrap;
+  /* Allow wrapping on smaller screens */
+  margin-top: 20px;
+  width: 100%;
+}
+
+:has(#stats-toggle:not(:checked)) :has(#targetInput:not(.ended)) .stats-panel {
+  display: none;
+}
+
+.stats-panel h2 {
+  margin: 0;
+}
+
+.stats-container {
+  display: none !important;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: var(--bg);
+  /* Light grey background */
+  min-width: 250px;
+  /* Ensure some minimum width */
+  flex: 1;
+  /* Allow containers to grow */
+  box-shadow: var(--shadow-small);
+}
+
+.stat-item {
+  /* Default margin - might be overridden */
+  margin-bottom: 15px;
+}
+
+.ideal-bar {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 30%;
+  background-color: #a0d8ef;
+  /* Lighter blue */
+}
+
+.actual-range-bar {
+  position: absolute;
+  left: 60%;
+  width: 30%;
+  background-color: #ffe8cc;
+  /* Lighter orange */
+}
+
+/* Dit:Dah Ratio Styles */
+.ratio-display {
+  margin-bottom: 8px;
+  font-size: 0.95em;
+}
+
+.ideal-value {
+  font-weight: bold;
+  color: #007bff;
+  /* Blue for ideal */
+}
+
+.actual-value {
+  font-weight: bold;
+  color: #fd7e14;
+  /* Orange for actual */
+}
+
+/* Visual Bar for Ratio */
+.ratio-visual-bar-container {
+  position: relative;
+  height: 15px;
+  /* Height of the bar area */
+  width: 100%;
+  background-color: #e9ecef;
+  /* Background of the bar */
+  border-radius: 4px;
+  margin-top: 10px;
+  overflow: hidden;
+  /* Ensure markers stay within bounds */
+}
+
+.ratio-bar {
+  /* Optional: Can be used for gradients or other effects later */
+  height: 100%;
+  width: 100%;
+}
+
+.ratio-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  /* Width of the marker line */
+  transform: translateX(-1.5px);
+  /* Center the marker */
+  border-radius: 1px;
+}
+
+.ratio-marker.ideal {
+  background-color: #007bff;
+  /* Blue */
+  /* Position will be set by JS based on 3.0 */
+}
+
+.ratio-marker.actual {
+  background-color: #fd7e14;
+  /* Orange */
+  /* Position will be set by JS */
+}
+
+/* Specific layout for Timing Stats Dit/Dah */
+#timing-stats {
+  display: flex;
+  gap: 20px;
+  /* Space between Dit and Dah columns */
+  align-items: flex-start;
+  /* Align columns to the top */
+}
+
+#timing-stats .stat-item {
+  flex: 1;
+  /* Each column takes equal space */
+  margin-top: 0 !important;
+  /* Override inline style */
+  margin-bottom: 0;
+  /* Remove bottom margin within this container */
+}
+
+/* Ensure heading spans across if needed, or adjust structure */
+#timing-stats h2,
+#timing-stats .stat-description {
+  width: 100%;
+  /* Make header/description span full width */
+  flex-basis: 100%;
+  /* Required for width: 100% in flex column */
+  margin-bottom: 15px;
+}
+
+footer {
+  color: var(--text-incomplete);
+  flex-direction: row;
+  display: flex;
+  /* width: calc(60% - 64px); */
+  width: 100%;
+  box-sizing: border-box;
+  padding: 32px;
+  justify-content: space-between;
+  position: fixed;
+  bottom: 0px;
+}
+
+a {
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.25s;
+}
+
+a:hover {
+  color: var(--accent1-dark);
+}
+
+a::before {
+  content: "";
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 0.1em;
+  bottom: 0;
+  left: 0;
+  background-color: var(--accent1-dark);
+  transform: scaleX(0);
+  transform-origin: 0%;
+  transition-timing-function: ease-out;
+  transition: transform 0.25s ease;
+}
+
+a:hover::before {
+  transform: scaleX(1);
+}
