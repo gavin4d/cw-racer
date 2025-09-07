@@ -25,25 +25,25 @@ const morseToAlphabet = new Map([
 	["2112", "X"],
 	["2122", "Y"],
 	["2211", "Z"],
-    ["12222", "1"],
-    ["11222", "2"],
-    ["11122", "3"],
-    ["11112", "4"],
-    ["11111", "5"],
-    ["21111", "6"],
-    ["22111", "7"],
-    ["22211", "8"],
-    ["22221", "9"],
-    ["22222", "0"],
+  ["12222", "1"],
+  ["11222", "2"],
+  ["11122", "3"],
+  ["11112", "4"],
+  ["11111", "5"],
+  ["21111", "6"],
+  ["22111", "7"],
+  ["22211", "8"],
+  ["22221", "9"],
+  ["22222", "0"],
 	["121212", "."],
-    ["221122", ","],
-    ["21121", "/"],
-    ["112211", "?"],
-    ["212122", "!"],
-    ["211112", "-"],
-    ["21221", "("],
-    ["212212", ")"],
-    ["222111", ":"],
+  ["221122", ","],
+  ["21121", "/"],
+  ["112211", "?"],
+  ["212122", "!"],
+  ["211112", "-"],
+  ["21221", "("],
+  ["212212", ")"],
+  ["222111", ":"],
 ]);
 
 class Decoder {
@@ -214,11 +214,11 @@ class Decoder {
         this.#updateTimeouts();
     }
 
-    getLastLetterTimings() {
+  getLastLetterTimings() {
 		return this.lastLetterTimings;
-    }
+  }
 
-    #addTimingStat(array, duration) { // Make private helper
+  #addTimingStat(array, duration) { // Make private helper
 		// Convert duration to integer ms before storing
 		const durationMs = Math.round(duration);
 		array.push(durationMs);

@@ -1,6 +1,7 @@
 // Morse Code Audio Generation Component
 let audioCtx = null;
 let sounderGlobalVolume = 0.5;
+let freq = 550;
 
 function setSounderGlobalVolume(volume) {
   sounderGlobalVolume = volume;
@@ -22,6 +23,7 @@ class Sounder {
     this.oscillator = null;
     this.gainNode = null;
     this.isInitialized = false;
+    this.timeoutID;
   }
 
   initialize() {
@@ -35,16 +37,17 @@ class Sounder {
     this.gainNode = audioCtx.createGain();
     this.oscillator.connect(this.gainNode);
     this.gainNode.connect(audioCtx.destination);
-    this.oscillator.frequency.value = 550;
+    this.oscillator.frequency.value = freq;
     this.oscillator.type = 'sine';
-    this.gainNode.gain.value = 0.00001;
+    this.gainNode.gain.value = sounderGlobalVolume;
     this.oscillator.start();
     this.isInitialized = true;
   }
 
-  setTone(freq) {
-    if (!this.isInitialized) this.initialize();
-    this.oscillator.frequency.value = freq;
+  setTone(f) {
+    // if (!this.isInitialized) this.initialize();
+    // this.oscillator.frequency.value = freq;
+    freq = f;
   }
 
   on() {
@@ -52,11 +55,22 @@ class Sounder {
     if (audioCtx.state !== 'running') {
       audioCtx.resume();
     }
-    this.gainNode.gain.setTargetAtTime(sounderGlobalVolume, audioCtx.currentTime, 0.001);
+    clearTimeout(this.timeoutID);
+    this.gainNode.gain.setValueAtTime(sounderGlobalVolume, audioCtx.currentTime);
+    // this.gainNode.gain.setValueAtTime(sounderGlobalVolume, audioCtx.currentTime);
+    this.oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.001);
+    // this.gainNode.gain.exponentialRampToValueAtTime(sounderGlobalVolume, audioCtx.currentTime + 0.04);
   }
 
   off() {
     if (!this.isInitialized) return;
-    this.gainNode.gain.setTargetAtTime(0.00001, audioCtx.currentTime, 0.001);
+    this.oscillator.frequency.setTargetAtTime(1, audioCtx.currentTime, 0.001);
+    this.timeoutID = setTimeout(
+      () => {
+        this.gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      },
+      5000
+    );
+    // this.gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.04);
   }
 }

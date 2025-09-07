@@ -3,14 +3,13 @@ class Keyer {
         this.sndr = sndr; // Sounder instance
         this.decoder = decoder; // Decoder instance
         // Using [ and ] for dits and dahs respectively for compatibility with the vband usb interface
-        this.ditKey1 = 'ControlLeft';
-        this.dahKey1 = 'ControlRight';
+        this.ditKey1 = 'ditKey';
+        this.dahKey1 = 'dahKey';
         this.ditKey2 = 'BracketLeft';
         this.dahKey2 = 'BracketRight';
         this.wpm = 20;
         this.unit = 60; // length of dit in milliseconds; 60 is 20wpm
         this.mode = 2;  // 1: straight key, 2: iambicA, 3: iambicB, 4: ultimatic
-        this.tone = 550;
         this.queue = [];
         this.ditKeyState = 0;
         this.dahKeyState = 0;
@@ -42,17 +41,12 @@ class Keyer {
         this.mode = mode;
     }
 
-    setTone(tone){
-        this.tone = tone;
-    }
-
     sendSignal() {
         this.sending = true;
         //console.log('startSignal');
         if (restartAudioNeeded()) {
             restartAudio();
         }
-        this.sndr.setTone(this.tone);
         this.sndr.on();
         this.decoder.keyOn();
     }
@@ -85,7 +79,6 @@ class Keyer {
                         restartAudio();
                     }
                     this.straightKeyActive = true;
-                    this.sndr.setTone(this.tone);
                     this.sndr.on();
                     this.decoder.keyOn();
                 }
