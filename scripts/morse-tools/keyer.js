@@ -3,8 +3,8 @@ class Keyer {
         this.sndr = sndr; // Sounder instance
         this.decoder = decoder; // Decoder instance
         // Using [ and ] for dits and dahs respectively for compatibility with the vband usb interface
-        this.ditKey1 = 'ditKey';
-        this.dahKey1 = 'dahKey';
+        this.ditKey1 = 'ControlLeft';
+        this.dahKey1 = 'ControlRight';
         this.ditKey2 = 'BracketLeft';
         this.dahKey2 = 'BracketRight';
         this.wpm = 20;

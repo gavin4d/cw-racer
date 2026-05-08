@@ -853,14 +853,13 @@ window.onload = function () {
     //     document.getElementById('ditButton').addEventListener("mousedown", () => {
     //         if (ended == true) return;
     //         if (started == false) start();
-    //         var event = new KeyboardEvent('keydown', {code: "ditKey"})
-    //         // event.code = 'ditKey';
+    //         var event = new KeyboardEvent('keydown', {code: "controlLeft"})
     //         keyer.press(event, true);
     //         updateStatsDisplay();
     //         console.log("down");
     //     });
     //     document.getElementById('ditButton').addEventListener("mouseup", () => {
-    //         var event = new KeyboardEvent('keyup', {code: "ditKey"})
+    //         var event = new KeyboardEvent('keyup', {code: "controlLeft"})
     //         keyer.press(event, false);
     //         console.log("up");
     //     });
